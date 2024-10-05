@@ -39,7 +39,7 @@ actor GossipActor is Actor
     end
 
   be receive_pair(s: F64, w: F64) =>
-    None // Do nothing for GossipActor
+    None 
 
   be report_convergence(main: Main tag) =>
     if not _active then
@@ -69,7 +69,7 @@ actor PushSumActor is Actor
     send_pair()
 
   be receive_rumor() =>
-    None // Do nothing for PushSumActor
+    None 
 
   be receive_pair(s_received: F64, w_received: F64) =>
     let old_ratio = _ratio
@@ -118,7 +118,7 @@ actor Main
     nodes = Array[Actor tag]
     start_time = Time.nanos()
     converged_count = 0
-    total_nodes = 0  // Initialize with a default value
+    total_nodes = 0  
 
     if env.args.size() != 4 then
       env.out.print("Usage: project2 numNodes topology algorithm")
@@ -129,7 +129,6 @@ actor Main
 
       total_nodes = num_nodes
 
-      // Create nodes
       for i in Range(0, num_nodes) do
         if algorithm == "gossip" then
           nodes.push(GossipActor(i, this))
@@ -138,7 +137,6 @@ actor Main
         end
       end
 
-      // Build topology
       match topology
       | "full" => build_full_network(nodes)
       | "3D" => build_3d_grid(nodes)
@@ -149,7 +147,6 @@ actor Main
         return
       end
 
-      // Start algorithm
       let rand = Rand(Time.nanos().u64())
       let starter: USize = rand.int(num_nodes.u64()).usize()
 
@@ -175,9 +172,8 @@ actor Main
       env.out.print("Convergence time: " + (convergence_time.f64() / 1_000_000.0).string() + " milliseconds")
     end
 
-    // Set up timer for convergence check
     let timers = Timers
-    let timer = Timer(ConvergenceNotify(this), 10_000_000_000) // 10 seconds
+    let timer = Timer(ConvergenceNotify(this), 10_000_000_000) 
     timers(consume timer)
 
   be check_convergence() =>

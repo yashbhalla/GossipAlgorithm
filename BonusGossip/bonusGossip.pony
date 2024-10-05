@@ -30,29 +30,32 @@ actor GossipActor is Actor
   be start_gossip() =>
     receive_rumor()
 
-  be receive_rumor() =>
-    if not _failed then
-      _rumor_count = _rumor_count + 1
-      print("Actor " + _id.string() + " received rumor. Count: " + _rumor_count.string())
-      if _rumor_count >= 10 then
-        _active = false
-        try (_main as Main tag).report_convergence() end
-      elseif _active and (_neighbors.size() > 0) then
-        let rand = Rand(Time.nanos().u64())
-        try
-          let neighbor = _neighbors(rand.int(_neighbors.size().u64()).usize())?
-          neighbor.receive_rumor()
-        end
+ be receive_rumor() =>
+  if _failed then
+    print("Failed Actor " + _id.string() + " received but ignored rumor")
+  else
+    _rumor_count = _rumor_count + 1
+    print("Actor " + _id.string() + " received rumor. Count: " + _rumor_count.string())
+    if _rumor_count >= 10 then
+      _active = false
+      try (_main as Main tag).report_convergence() end
+    elseif _active and (_neighbors.size() > 0) then
+      let rand = Rand(Time.nanos().u64())
+      try
+        let neighbor = _neighbors(rand.int(_neighbors.size().u64()).usize())?
+        neighbor.receive_rumor()
       end
     end
+  end
 
   be receive_pair(s: F64, w: F64) =>
-    None // Do nothing for GossipActor
-
+    None 
+  
   be simulate_failure(failure_prob: F64) =>
     let rand = Rand(Time.nanos().u64())
     if rand.real() < failure_prob then
       _failed = true
+      print("Actor " + _id.string() + " has failed")
     end
 
   be report_convergence(main: Main tag) =>
@@ -89,7 +92,7 @@ actor PushSumActor is Actor
     send_pair()
 
   be receive_rumor() =>
-    None // Do nothing for PushSumActor
+    None 
 
   be receive_pair(s_received: F64, w_received: F64) =>
     if not _failed then
@@ -170,7 +173,6 @@ actor Main
 
     total_nodes = num_nodes
 
-    // Create nodes
     for i in Range(0, num_nodes) do
       if algorithm == "gossip" then
         nodes.push(GossipActor(i, this, env))
@@ -179,7 +181,6 @@ actor Main
       end
     end
 
-    // Build topology
     match topology
     | "full" => build_full_network(nodes)
     | "3D" => build_3d_grid(nodes)
@@ -190,12 +191,10 @@ actor Main
       return
     end
 
-    // Simulate failures
     for node in nodes.values() do
       node.simulate_failure(failure_prob)
     end
 
-    // Start algorithm
     let rand = Rand(Time.nanos().u64())
     let starter: USize = rand.int(num_nodes.u64()).usize()
 
@@ -215,8 +214,7 @@ actor Main
 
     env.out.print("Finished setup, starting algorithm")
 
-    // Set a timeout
-    let timeout_timer = Timer(TimeoutNotify(this), 60_000_000_000) // 60 seconds timeout
+    let timeout_timer = Timer(TimeoutNotify(this), 60_000_000_000) 
     _timers(consume timeout_timer)
 
   be report_convergence() =>
@@ -256,7 +254,10 @@ actor Main
         let node = network(i)?
         for j in Range(0, network.size()) do
           if i != j then
-            try node.add_neighbor(network(j)?) end
+            try 
+              node.add_neighbor(network(j)?)
+              env.out.print("Added neighbor: " + i.string() + " -> " + j.string())
+            end
           end
         end
       end
