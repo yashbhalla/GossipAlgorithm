@@ -1,9 +1,5 @@
 # Network Convergence with Gossip and Push-Sum Algorithms
 
-## Team Members
-- Shrey Gupta
-- Yash Bhalla
-
 ## Overview
 This project explores the convergence times of Gossip and Push-Sum algorithms across different network topologies. We implemented failure models to simulate real-world conditions where nodes or connections might fail.
 
